@@ -1,8 +1,11 @@
 import * as vscode from 'vscode';
+import { MessageType } from './enums';
+import { startNode } from './node';
+import { Message } from './types';
 import { getNonce } from './utils';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'osmium.sidebar';
+  public static readonly viewType = 'osmiumMassa.sidebar';
   private _view?: vscode.WebviewView;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
@@ -19,7 +22,26 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this._extensionUri],
     };
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.onDidReceiveMessage((e) => {
+      this._onMessageCallback(e);
+    });
+
   }
+
+  async _onMessageCallback(message: Message) {
+    if (
+      !this._view
+    ) {
+      return;
+    }
+    switch (message.type) {
+      case MessageType.START_NODE:
+        startNode(vscode);
+        break;
+      default:
+        break;
+      }
+    }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'index.js'));
