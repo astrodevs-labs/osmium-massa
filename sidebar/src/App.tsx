@@ -11,35 +11,44 @@ export const App = () => {
     setVscode(acquireVsCodeApi());
   }, []);
 
-  // useEffect(() => {
-  //   const listener = (event: WindowEventMap['message']) => {
-  //     switch (event.data.type) {
-  //       case MessageType.ERROR: {
-  //         console.log('error : ' + event.data.error);
-  //         vscode.window.showInformationMessage(event.data.error);
-  //         break;
-  //       }
-  //     }
-  //   };
-  //   window.addEventListener('message', listener);
-  //   return () => window.removeEventListener('message', listener);
-  // }, []);
-
   return (
-    <>
-      <p>This is the massa pannel</p>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        width: '100px',
+        height: '100px',
+      }}
+    >
       <button
-        style={{ backgroundColor: '#296ed0', color: 'white', padding: '5px', borderRadius: '5px', border: 'none' }}
+        style={{ backgroundColor: '#296ed0', color: 'white', padding: '5px', borderRadius: '2px', border: 'none' }}
         onClick={() => {
-          console.log('WIP send notification to back');
           vscode.postMessage({
             type: MessageType.START_NODE,
           });
-          console.log('notification sent');
         }}
       >
         Start a node
       </button>
-    </>
+      <button
+        style={{
+          backgroundColor: '#296ed0',
+          color: 'white',
+          padding: '5px',
+          borderRadius: '2px',
+          border: 'none',
+          marginTop: '10px',
+        }}
+        onClick={() => {
+          vscode.postMessage({
+            type: MessageType.KILL_NODE,
+          });
+        }}
+      >
+        Kill nodes
+      </button>
+    </div>
   );
 };
