@@ -1,0 +1,27 @@
+.dropdown-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
+}
+
+.label {
+    margin-bottom: 0.2rem;
+}
+
+.dropdown-wallets, .dropdown-contracts, .dropdown-environments {
+    width: 80%;
+    margin-right: 0.5rem;
+}
+
+.add-wallet-button, .add-environment-button {
+    height: calc(var(--input-height) * 1px);;
+}
+
+.wallet-container, .environment-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.error-message {
+    color: var(--vscode-errorForeground);
+}
