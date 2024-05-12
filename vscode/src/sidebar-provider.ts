@@ -8,6 +8,7 @@ import { window } from 'vscode';
 import { InputAction, MessageType } from './enums';
 import { Address } from 'viem';
 import { RpcUrl } from './actions/types';
+import * as path from 'node:path';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'osmium.sidebar';
@@ -16,6 +17,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   private _deployContractRepository?: DeployContractRepository;
   private _walletRepository?: WalletRepository;
   private _environmentRepository?: EnvironmentRepository;
+
+  private _osmiumWatcher?: vscode.FileSystemWatcher;
+  private _buildWatcher?: vscode.FileSystemWatcher;
 
   async _showInputsBox(inputsBox: any) {
     const tmp = inputsBox;
@@ -34,6 +38,36 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     return tmp;
   }
 
+  async _osmiumWatcherCallback(uri: vscode.Uri) {
+    if (!this._view) return;
+    const basename = path.basename(uri.fsPath, '.json');
+    if (basename === 'wallets') {
+      this._walletRepository?.load();
+      await this._view.webview.postMessage({
+        type: MessageType.WALLETS,
+        wallets: this._walletRepository?.getWallets(),
+      });
+    }
+    if (basename === 'environments') {
+      this._environmentRepository?.load();
+      await this._view.webview.postMessage({
+        type: MessageType.ENVIRONMENTS,
+        environments: this._environmentRepository?.getEnvironments(),
+      });
+    }
+  }
+
+  async _buildWatcherCallback() {
+    if (!this._view) {
+      return;
+    }
+    this._deployContractRepository?.load();
+    await this._view.webview.postMessage({
+      type: MessageType.DEPLOY_CONTRACTS,
+      contracts: this._deployContractRepository?.getContracts(),
+    });
+  }
+
   _init() {
     if (vscode.workspace.workspaceFolders?.length) {
       const fsPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
@@ -41,6 +75,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       this._deployContractRepository = new DeployContractRepository(fsPath);
       this._walletRepository = new WalletRepository(fsPath);
       this._environmentRepository = new EnvironmentRepository(fsPath);
+
+      this._osmiumWatcher = vscode.workspace.createFileSystemWatcher('**/.osmium/*.json');
+      this._osmiumWatcher.onDidChange((uri) => this._osmiumWatcherCallback(uri));
+      this._buildWatcher = vscode.workspace.createFileSystemWatcher('**/build/*.wasm');
+      this._buildWatcher.onDidChange(() => this._buildWatcherCallback());
     }
   }
 
