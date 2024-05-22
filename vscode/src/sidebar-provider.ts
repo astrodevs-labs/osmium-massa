@@ -9,8 +9,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'osmiumMassa.sidebar';
   private _view?: vscode.WebviewView;
   private _nodeIsRunning?: boolean;
+  private _outputChannel : vscode.OutputChannel;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly _extensionUri: vscode.Uri) {
+    this._outputChannel = vscode.window.createOutputChannel("Start Node Logs");
+  }
 
   public async resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -43,11 +46,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           vscode.window.showInformationMessage("node is already running");
           return 
         }
-        startNode(vscode);
+        startNode(vscode, this._outputChannel);
         this._nodeIsRunning = true;
         break;
       case MessageType.KILL_NODE:
-          killNode(vscode);
+        if (this._nodeIsRunning) {
+          killNode(vscode, this._outputChannel);
+          this._nodeIsRunning = false;
+        } else {
+          vscode.window.showInformationMessage("no node is running");
+        }
         break;
       default:
         break;
