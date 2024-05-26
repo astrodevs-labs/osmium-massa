@@ -1,18 +1,16 @@
-/*import { WalletRepository } from './WalletRepository';
+import { WalletRepository } from './WalletRepository';
 import { ContractParams } from './types';
 import { EnvironmentRepository } from './EnvironmentRepository';
 import { DeployContractRepository } from './DeployContractRepository';
-import { deploySC, ISCData, WalletClient } from '@massalabs/massa-sc-deployer';
+import { fromMAS, MAX_GAS_DEPLOYMENT } from '@massalabs/massa-web3';
 import { readFileSync } from 'node:fs';
-import { fromMAS } from '@massalabs/massa-web3';
+import { deploySC, WalletClient } from '@massalabs/massa-sc-deployer';
 
 export interface DeployContractOptions {
   environmentId: string;
   contractId: string;
   walletId: string;
   fees: bigint;
-  maxGas: bigint;
-  waitFirstEvent: boolean;
   value: bigint;
   params: ContractParams[];
 }
@@ -37,8 +35,6 @@ export class Deploy {
     environmentId,
     walletId,
     fees,
-    maxGas,
-    waitFirstEvent,
     value,
     params,
   }: DeployContractOptions): Promise<any> {
@@ -66,13 +62,12 @@ export class Deploy {
           data: readFileSync(contractInfos.path),
           coins: fromMAS(value),
           args: params,
-        } as ISCData,
+        },
       ],
-      environmentInfos.chainId,
+      BigInt(environmentInfos.chainId),
       fees,
-      maxGas,
-      waitFirstEvent,
+      MAX_GAS_DEPLOYMENT,
+      true,
     );
   }
 }
-*/

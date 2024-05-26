@@ -9,6 +9,7 @@ import { InputAction, MessageType } from './enums';
 import { Address } from 'viem';
 import { RpcUrl } from './actions/types';
 import * as path from 'node:path';
+import { Deploy } from './actions/Deploy';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'osmium.sidebar';
@@ -17,6 +18,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   private _deployContractRepository?: DeployContractRepository;
   private _walletRepository?: WalletRepository;
   private _environmentRepository?: EnvironmentRepository;
+
+  private _deploy?: Deploy;
 
   private _osmiumWatcher?: vscode.FileSystemWatcher;
   private _buildWatcher?: vscode.FileSystemWatcher;
@@ -76,6 +79,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       this._walletRepository = new WalletRepository(fsPath);
       this._environmentRepository = new EnvironmentRepository(fsPath);
 
+      this._deploy = new Deploy(this._deployContractRepository, this._walletRepository, this._environmentRepository);
+
       this._osmiumWatcher = vscode.workspace.createFileSystemWatcher('**/.osmium/*.json');
       this._osmiumWatcher.onDidChange((uri) => this._osmiumWatcherCallback(uri));
       this._buildWatcher = vscode.workspace.createFileSystemWatcher('**/build/*.wasm');
@@ -84,7 +89,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   }
 
   async _onMessageCallback(message: Message) {
-    if (!this._view || !this._deployContractRepository || !this._walletRepository || !this._environmentRepository) {
+    if (
+      !this._view ||
+      !this._deployContractRepository ||
+      !this._walletRepository ||
+      !this._environmentRepository ||
+      !this._deploy
+    ) {
       return;
     }
     switch (message.type) {
@@ -172,6 +183,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           this._environmentRepository.deleteEnvironment(environmentName);
         }
         break;
+      case MessageType.DEPLOY_CONTRACT:
+        await this._view.webview.postMessage({
+          type: MessageType.DEPLOY_CONTRACT_RESPONSE,
+          response: await this._deploy.deployContract(message.data),
+        });
     }
   }
 

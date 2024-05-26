@@ -3,7 +3,7 @@ import { FormProvider } from 'react-hook-form';
 import { VSCodeButton, VSCodeDivider } from '@vscode/webview-ui-toolkit/react';
 import useDeployPage from '@pages/DeployPage/DeployPage.logic.ts';
 import { ResourceManager } from '@hooks/useResourceManager.ts';
-import DeployContracts from '@components/DeployForm/DeployForm.tsx';
+import DeployForm from '@components/DeployForm/DeployForm.tsx';
 import './DeployPage.css';
 
 const DeployPage = (props: { vscode: VSCode; resourceManager: ResourceManager }) => {
@@ -13,7 +13,7 @@ const DeployPage = (props: { vscode: VSCode; resourceManager: ResourceManager })
     <div className="page-container">
       <FormProvider {...logic.form}>
         <form onSubmit={logic.form.handleSubmit(logic.onSubmit)}>
-          <DeployContracts
+          <DeployForm
             wallets={logic.wallets}
             contracts={logic.contracts}
             environments={logic.environments}

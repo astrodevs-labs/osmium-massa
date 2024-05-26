@@ -10,17 +10,23 @@ const useDeployPage = (vscode: VSCode, resourceManager: ResourceManager) => {
       environmentId: '',
       contractId: '',
       walletId: '',
-      fees: BigInt(0),
-      maxGas: BigInt(0),
-      waitFirstEvent: false,
-      value: BigInt(0),
+      fees: 0,
+      value: 0,
+      params: [],
     },
   });
   const [response, setResponse] = useState<{ responseType: MessageType; data: string }>();
 
   const onSubmit: SubmitHandler<IDeployForm> = (data) => {
-    //if (isNaN(data.gasLimit)) form.setError('gasLimit', { type: 'manual', message: 'Invalid number' });
-    //if (isNaN(data.value)) form.setError('value', { type: 'manual', message: 'Invalid number' });
+    if (isNaN(data.fees)) {
+      form.setError('fees', { type: 'manual', message: 'Invalid number' });
+      return;
+    }
+
+    if (isNaN(data.value)) {
+      form.setError('value', { type: 'manual', message: 'Invalid number' });
+      return;
+    }
 
     vscode.postMessage({
       type: MessageType.DEPLOY_CONTRACT,

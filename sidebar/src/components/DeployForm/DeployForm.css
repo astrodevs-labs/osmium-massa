@@ -15,11 +15,21 @@
 
 .add-wallet-button, .add-environment-button {
     height: calc(var(--input-height) * 1px);;
+    width: 20%;
 }
 
 .wallet-container, .environment-container {
     display: flex;
     flex-direction: row;
+}
+
+.fees-container, .value-container {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+.fees-textfield, .value-textfield {
+    width: 100%;
 }
 
 .error-message {

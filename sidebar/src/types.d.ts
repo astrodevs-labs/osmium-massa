@@ -5,8 +5,7 @@ export interface IDeployForm {
   environmentId: string;
   contractId: string;
   walletId: string;
-  fees: bigint;
-  maxGas: bigint;
-  waitFirstEvent: boolean;
-  value: bigint;
+  fees: number;
+  value: number;
+  params: any[];
 }

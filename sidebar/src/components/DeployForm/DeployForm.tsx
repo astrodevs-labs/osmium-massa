@@ -1,7 +1,7 @@
 import { DeployContracts, Environments, Wallets } from '@backend/actions/types';
 import { VSCode } from '@/types';
 import './DeployForm.css';
-import { VSCodeButton, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeButton, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
 import useDeployForm from '@components/DeployForm/DeployForm.logic.ts';
 
 interface DeployFormProps {
@@ -75,6 +75,30 @@ const DeployForm = ({ wallets, contracts, environments, vscode }: DeployFormProp
             );
           })}
         </VSCodeDropdown>
+      </div>
+      <div className="fees-container">
+        <VSCodeTextField
+          className="fees-textfield"
+          {...logic.register('fees', {
+            required: true,
+            valueAsNumber: true,
+          })}
+        >
+          Fees (in MAS)
+        </VSCodeTextField>
+        {logic.errors.fees && <span className="error-message">Invalid number</span>}
+      </div>
+      <div className="value-container">
+        <VSCodeTextField
+          className="value-textfield"
+          {...logic.register('value', {
+            required: true,
+            valueAsNumber: true,
+          })}
+        >
+          Value (in MAS)
+        </VSCodeTextField>
+        {logic.errors.value && <span className="error-message">Invalid number</span>}
       </div>
     </div>
   );
