@@ -32,7 +32,7 @@
       "sidebar": [
         {
           "type": "webview",
-          "id": "osmium.sidebar",
+          "id": "osmiumMassa.sidebar",
           "name": "Osmium: Deploy/Interact"
         }
       ]

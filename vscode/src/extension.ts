@@ -1,7 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { ExtensionContext, window, workspace } from 'vscode';
-import { LanguageClient } from 'vscode-languageclient/node';
+import { ExtensionContext, window } from 'vscode';
 import { SidebarProvider } from './sidebar-provider';
 
 // This method is called when your extension is activated

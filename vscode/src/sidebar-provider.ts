@@ -1,11 +1,19 @@
 import * as vscode from 'vscode';
+import { MessageType } from './enums';
+import { startNode } from './node';
+import { killNode } from './node/killNode';
+import { Message } from './types';
 import { getNonce } from './utils';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'osmium.sidebar';
+  public static readonly viewType = 'osmiumMassa.sidebar';
   private _view?: vscode.WebviewView;
+  private _nodeIsRunning?: boolean;
+  private _outputChannel : vscode.OutputChannel;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly _extensionUri: vscode.Uri) {
+    this._outputChannel = vscode.window.createOutputChannel("Start Node Logs");
+  }
 
   public async resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -13,13 +21,46 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken,
   ) {
     this._view = webviewView;
+    this._nodeIsRunning = false;
 
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this._extensionUri],
     };
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.onDidReceiveMessage((e) => {
+      this._onMessageCallback(e);
+    });
+
   }
+
+  async _onMessageCallback(message: Message) {
+    if (
+      !this._view
+    ) {
+      return;
+    }
+    switch (message.type) {
+      case MessageType.START_NODE:
+        if (this._nodeIsRunning) {
+          vscode.window.showInformationMessage("node is already running");
+          return 
+        }
+        startNode(vscode, this._outputChannel);
+        this._nodeIsRunning = true;
+        break;
+      case MessageType.KILL_NODE:
+        if (this._nodeIsRunning) {
+          killNode(vscode, this._outputChannel);
+          this._nodeIsRunning = false;
+        } else {
+          vscode.window.showInformationMessage("no node is running");
+        }
+        break;
+      default:
+        break;
+      }
+    }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'index.js'));
