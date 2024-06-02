@@ -1,10 +1,19 @@
-import { WalletRepository } from './WalletRepository';
-import { ContractParams } from './types';
-import { EnvironmentRepository } from './EnvironmentRepository';
-import { DeployContractRepository } from './DeployContractRepository';
-import { fromMAS, MAX_GAS_DEPLOYMENT } from '@massalabs/massa-web3';
+import { WalletRepository } from './WalletRepository.js';
+import { ContractParams } from './types.js';
+import { EnvironmentRepository } from './EnvironmentRepository.js';
+import { DeployContractRepository } from './DeployContractRepository.js';
+import {
+  Client,
+  ClientFactory,
+  fromMAS,
+  IContractData,
+  IProvider,
+  MAX_GAS_DEPLOYMENT,
+  ProviderType,
+  WalletClient,
+} from '@massalabs/massa-web3';
 import { readFileSync } from 'node:fs';
-import { deploySC, WalletClient } from '@massalabs/massa-sc-deployer';
+import * as path from 'node:path';
 
 export interface DeployContractOptions {
   environmentId: string;
@@ -54,20 +63,22 @@ export class Deploy {
 
     const deployerAccount = await WalletClient.getAccountFromSecretKey(walletInfos.privateKey);
 
-    return await deploySC(
-      environmentInfos.rpc,
-      deployerAccount,
-      [
-        {
-          data: readFileSync(contractInfos.path),
-          coins: fromMAS(value),
-          args: params,
-        },
-      ],
+    const web3Client: Client = await ClientFactory.createCustomClient(
+      [{ url: environmentInfos.rpc, type: ProviderType.PUBLIC } as IProvider],
       BigInt(environmentInfos.chainId),
-      fees,
-      MAX_GAS_DEPLOYMENT,
       true,
+      deployerAccount,
+    );
+
+    return await web3Client.smartContracts().deploySmartContract(
+      {
+        contractDataBinary: readFileSync(contractInfos.path),
+        fee: fees,
+        maxGas: MAX_GAS_DEPLOYMENT,
+        //datastore
+        maxCoins: fromMAS(value),
+      } as IContractData,
+      web3Client.wallet().getBaseAccount()!,
     );
   }
 }
