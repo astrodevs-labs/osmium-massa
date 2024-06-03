@@ -6,7 +6,6 @@ import { DeployContractRepository } from './actions/DeployContractRepository';
 import { Message } from './types';
 import { window } from 'vscode';
 import { InputAction, MessageType } from './enums';
-import { Address } from 'viem';
 import { RpcUrl } from './actions/types';
 import * as path from 'node:path';
 import { Deploy } from './actions/Deploy';
@@ -130,12 +129,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             walletPk: 'Enter private key',
           });
           if (!inputs) return;
-          if (!inputs.walletAddress.startsWith('0x') || !inputs.walletPk.startsWith('0x')) return;
 
           this._walletRepository.createWallet(
             inputs.walletName,
-            <Address>inputs.walletAddress,
-            <Address>inputs.walletPk,
+            inputs.walletAddress,
+            inputs.walletPk,
           );
         }
 
@@ -163,7 +161,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             environmentChainId: 'Enter chain id',
           });
           if (!inputs) return;
-          if (!inputs.environmentRpc.startsWith('http') && !inputs.environmentRpc.startsWith('ws')) return;
 
           this._environmentRepository.createEnvironment(
             inputs.environmentName,
@@ -184,6 +181,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
         break;
       case MessageType.DEPLOY_CONTRACT:
+        message.data.params = message.data.params.map((param: any) => {
+          return {
+            value: param.value,
+            type: Number(param.type),
+          };
+        });
         await this._view.webview.postMessage({
           type: MessageType.DEPLOY_CONTRACT_RESPONSE,
           response: await this._deploy.deployContract(message.data),

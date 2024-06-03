@@ -15,7 +15,7 @@ const useDeployPage = (vscode: VSCode, resourceManager: ResourceManager) => {
       params: [],
     },
   });
-  const [response, setResponse] = useState<{ responseType: MessageType; data: string }>();
+  const [response, setResponse] = useState<string>();
 
   const onSubmit: SubmitHandler<IDeployForm> = (data) => {
     if (isNaN(data.fees)) {
@@ -61,7 +61,7 @@ const useDeployPage = (vscode: VSCode, resourceManager: ResourceManager) => {
     const listener = (event: WindowEventMap['message']) => {
       switch (event.data.type) {
         case MessageType.DEPLOY_CONTRACT_RESPONSE:
-          setResponse({ responseType: MessageType.DEPLOY_CONTRACT_RESPONSE, data: event.data.response });
+          setResponse(event.data.response);
           break;
       }
     };

@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { Address } from 'viem';
 import { RpcUrl, Wallet, Wallets } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -42,7 +41,7 @@ export class WalletRepository {
     return this._wallets.find((w) => w.id === id);
   }
 
-  public createWallet(name: string, address: Address, privateKey: Address): void {
+  public createWallet(name: string, address: string, privateKey: string): void {
     const wallet: Wallet = { name, address, privateKey, id: uuidv4() };
     if (this._wallets.find((w) => w.address === address)) {
       // replace

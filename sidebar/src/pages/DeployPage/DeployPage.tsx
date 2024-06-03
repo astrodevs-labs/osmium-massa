@@ -5,6 +5,17 @@ import useDeployPage from '@pages/DeployPage/DeployPage.logic.ts';
 import { ResourceManager } from '@hooks/useResourceManager.ts';
 import DeployForm from '@components/DeployForm/DeployForm.tsx';
 import './DeployPage.css';
+import DeployParams from '@components/DeployParams/DeployParams.tsx';
+
+const Response = (response: string) => {
+  return (
+    <div>
+      <VSCodeDivider className="divider" />
+      <p>Response:</p>
+      <p>{response}</p>
+    </div>
+  );
+};
 
 const DeployPage = (props: { vscode: VSCode; resourceManager: ResourceManager }) => {
   const logic = useDeployPage(props.vscode, props.resourceManager);
@@ -20,12 +31,14 @@ const DeployPage = (props: { vscode: VSCode; resourceManager: ResourceManager })
             vscode={props.vscode}
           />
           <VSCodeDivider className="divider" />
-          {/*<InteractParams contracts={logic.contracts} />*/}
+          <DeployParams />
+          <VSCodeDivider className="divider" />
           <VSCodeButton className="submit-button" type="submit">
             Deploy
           </VSCodeButton>
         </form>
       </FormProvider>
+      {logic.response && Response(logic.response)}
     </div>
   );
 };

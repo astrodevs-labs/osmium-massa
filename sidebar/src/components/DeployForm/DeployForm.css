@@ -14,7 +14,7 @@
 }
 
 .add-wallet-button, .add-environment-button {
-    height: calc(var(--input-height) * 1px);;
+    height: calc(var(--input-height) * 1px);
     width: 20%;
 }
 

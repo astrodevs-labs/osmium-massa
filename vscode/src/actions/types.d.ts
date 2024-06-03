@@ -1,4 +1,4 @@
-import { Address } from 'viem';
+import { IParam } from '@massalabs/massa-web3';
 
 export type RpcUrl = `ws://${string}` | `wss://${string}` | `http://${string}` | `https://${string}`;
 
@@ -21,13 +21,13 @@ export type Environments = Environment[];
 
 export interface Wallet {
   name: string;
-  address: Address;
-  privateKey: Address;
+  address: string;
+  privateKey: string;
   id: string;
 }
 
 export type Wallets = Wallet[];
 
-export type ContractParam = any;
+export type ContractParam = IParam;
 
 export type ContractParams = ContractParam[];

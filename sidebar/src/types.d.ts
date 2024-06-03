@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ArgTypes } from '@/enums.ts';
+
 export type VSCode = any;
+
+export interface IParam {
+  type: ArgTypes;
+  value: any;
+}
 
 export interface IDeployForm {
   environmentId: string;
@@ -7,5 +14,5 @@ export interface IDeployForm {
   walletId: string;
   fees: number;
   value: number;
-  params: any[];
+  params: Param[];
 }
