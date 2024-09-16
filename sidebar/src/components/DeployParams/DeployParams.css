@@ -1,0 +1,17 @@
+.param, .add-remove-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.add-button, .remove-button {
+    width: 47%;
+}
+
+.param-textfield {
+    width: 70%;
+}
+
+.param-dropdown {
+    width: 25%;
+}

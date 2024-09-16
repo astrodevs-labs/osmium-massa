@@ -1,9 +1,198 @@
 import * as vscode from 'vscode';
 import { getNonce } from './utils';
+import { EnvironmentRepository } from './actions/EnvironmentRepository';
+import { WalletRepository } from './actions/WalletRepository';
+import { DeployContractRepository } from './actions/DeployContractRepository';
+import { Message } from './types';
+import { window } from 'vscode';
+import { InputAction, MessageType } from './enums';
+import { RpcUrl } from './actions/types';
+import * as path from 'node:path';
+import { Deploy } from './actions/Deploy';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'osmium.sidebar';
   private _view?: vscode.WebviewView;
+
+  private _deployContractRepository?: DeployContractRepository;
+  private _walletRepository?: WalletRepository;
+  private _environmentRepository?: EnvironmentRepository;
+
+  private _deploy?: Deploy;
+
+  private _osmiumWatcher?: vscode.FileSystemWatcher;
+  private _buildWatcher?: vscode.FileSystemWatcher;
+
+  async _showInputsBox(inputsBox: any) {
+    const tmp = inputsBox;
+
+    for (const input of Object.keys(inputsBox)) {
+      const value = await window.showInputBox({
+        prompt: inputsBox[input],
+        ignoreFocusOut: true,
+      });
+      if (!value) {
+        return undefined;
+      }
+      tmp[input] = value;
+    }
+
+    return tmp;
+  }
+
+  async _osmiumWatcherCallback(uri: vscode.Uri) {
+    if (!this._view) return;
+    const basename = path.basename(uri.fsPath, '.json');
+    if (basename === 'wallets') {
+      this._walletRepository?.load();
+      await this._view.webview.postMessage({
+        type: MessageType.WALLETS,
+        wallets: this._walletRepository?.getWallets(),
+      });
+    }
+    if (basename === 'environments') {
+      this._environmentRepository?.load();
+      await this._view.webview.postMessage({
+        type: MessageType.ENVIRONMENTS,
+        environments: this._environmentRepository?.getEnvironments(),
+      });
+    }
+  }
+
+  async _buildWatcherCallback() {
+    if (!this._view) {
+      return;
+    }
+    this._deployContractRepository?.load();
+    await this._view.webview.postMessage({
+      type: MessageType.DEPLOY_CONTRACTS,
+      contracts: this._deployContractRepository?.getContracts(),
+    });
+  }
+
+  _init() {
+    if (vscode.workspace.workspaceFolders?.length) {
+      const fsPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+
+      this._deployContractRepository = new DeployContractRepository(fsPath);
+      this._walletRepository = new WalletRepository(fsPath);
+      this._environmentRepository = new EnvironmentRepository(fsPath);
+
+      this._deploy = new Deploy(this._deployContractRepository, this._walletRepository, this._environmentRepository);
+
+      this._osmiumWatcher = vscode.workspace.createFileSystemWatcher('**/.osmium/*.json');
+      this._osmiumWatcher.onDidChange((uri) => this._osmiumWatcherCallback(uri));
+      this._buildWatcher = vscode.workspace.createFileSystemWatcher('**/build/*.wasm');
+      this._buildWatcher.onDidChange(() => this._buildWatcherCallback());
+    }
+  }
+
+  async _onMessageCallback(message: Message) {
+    if (
+      !this._view ||
+      !this._deployContractRepository ||
+      !this._walletRepository ||
+      !this._environmentRepository ||
+      !this._deploy
+    ) {
+      return;
+    }
+    switch (message.type) {
+      case MessageType.GET_WALLETS:
+        await this._view.webview.postMessage({
+          type: MessageType.WALLETS,
+          wallets: this._walletRepository.getWallets(),
+        });
+        break;
+      case MessageType.GET_DEPLOY_CONTRACTS:
+        await this._view.webview.postMessage({
+          type: MessageType.DEPLOY_CONTRACTS,
+          contracts: this._deployContractRepository.getContracts(),
+        });
+        break;
+      case MessageType.GET_ENVIRONMENTS:
+        await this._view.webview.postMessage({
+          type: MessageType.ENVIRONMENTS,
+          environments: this._environmentRepository.getEnvironments(),
+        });
+        break;
+      case MessageType.EDIT_WALLETS:
+        const walletAction = await window.showQuickPick([InputAction.ADD, InputAction.REMOVE], {
+          title: 'Edit wallets',
+          ignoreFocusOut: true,
+        });
+
+        if (walletAction === InputAction.ADD) {
+          const inputs = await this._showInputsBox({
+            walletName: 'Enter name',
+            walletAddress: 'Enter address',
+            walletPk: 'Enter private key',
+          });
+          if (!inputs) return;
+
+          this._walletRepository.createWallet(
+            inputs.walletName,
+            inputs.walletAddress,
+            inputs.walletPk,
+          );
+        }
+
+        if (walletAction === InputAction.REMOVE) {
+          const walletName = await window.showQuickPick(
+            this._walletRepository.getWallets().map((w) => w.name),
+            {
+              title: 'Remove wallet',
+              ignoreFocusOut: true,
+            },
+          );
+          if (!walletName) return;
+          this._walletRepository.deleteWallet(walletName);
+        }
+        break;
+      case MessageType.EDIT_ENVIRONMENT:
+        const environmentAction = await window.showQuickPick([InputAction.ADD, InputAction.REMOVE], {
+          title: 'Edit environment',
+          ignoreFocusOut: true,
+        });
+        if (environmentAction === InputAction.ADD) {
+          const inputs = await this._showInputsBox({
+            environmentName: 'Enter name',
+            environmentRpc: 'Enter rpc',
+            environmentChainId: 'Enter chain id',
+          });
+          if (!inputs) return;
+
+          this._environmentRepository.createEnvironment(
+            inputs.environmentName,
+            <RpcUrl>inputs.environmentRpc,
+            inputs.environmentChainId,
+          );
+        }
+        if (environmentAction === InputAction.REMOVE) {
+          const environmentName = await window.showQuickPick(
+            this._environmentRepository.getEnvironments().map((e) => e.name),
+            {
+              title: 'Remove environment',
+              ignoreFocusOut: true,
+            },
+          );
+          if (!environmentName) return;
+          this._environmentRepository.deleteEnvironment(environmentName);
+        }
+        break;
+      case MessageType.DEPLOY_CONTRACT:
+        message.data.params = message.data.params.map((param: any) => {
+          return {
+            value: param.value,
+            type: Number(param.type),
+          };
+        });
+        await this._view.webview.postMessage({
+          type: MessageType.DEPLOY_CONTRACT_RESPONSE,
+          response: await this._deploy.deployContract(message.data),
+        });
+    }
+  }
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -13,12 +202,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken,
   ) {
     this._view = webviewView;
+    this._init();
 
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this._extensionUri],
     };
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.onDidReceiveMessage((e) => {
+      this._onMessageCallback(e);
+    });
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
